@@ -1,0 +1,5 @@
+*.o
+*.cfg
+*.bak
+*.ini
+*.dsk
