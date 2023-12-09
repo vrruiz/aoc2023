@@ -3,3 +3,7 @@
 *.bak
 *.ini
 *.dsk
+*.err
+*.out
+.vscode
+templates
