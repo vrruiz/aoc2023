@@ -1,6 +1,6 @@
 {$mode ObjFPC}
-{$H}
-program fp8_1;
+{$H+}
+program fp8_2;
 
 uses
     Classes, Crt, Generics.Collections, Types, SysUtils, StrUtils;
@@ -12,11 +12,29 @@ type
         right: String;
     end;
     TNodes = specialize THashMap<String, TNode>;
+    TInt64List = specialize TList<Int64>;
     TReadMode = (rmName, rmLeft, rmRight);
 
 var
-    total: Integer;
-    nodes: TNodes;
+    total: Int64;
+
+function GreatestCommonDivisor(a, b: Int64): Int64;
+var
+    temp: Int64;
+begin
+    while b <> 0 do
+    begin
+        temp := b;
+        b := a mod b;
+        a := temp
+    end;
+    Result := a;
+end;
+
+function LeastCommonMultiple(a, b: Int64): Int64;
+begin
+    Result := b * (a div GreatestCommonDivisor(a, b));
+end;
 
 function ParseString(sInput: AnsiString): TNode;
 var
@@ -61,70 +79,88 @@ begin
     Result := node;
 end;
 
-function Navigate(nodes: TNodes; paths: String; first: String; last: String; maxSteps: Integer): Integer;
+function Navigate(nodes: TNodes; paths: String; first: String; maxSteps: Integer): Integer;
 var
     steps, currentPath: Integer;
-    element: String;
+    next: String;
     node: TNode;
 
 begin
     steps := 0;
     currentPath := 1;
-    element := first;
-    node := nodes[element];
-    WriteLn(node.name, ' ', Length(paths));
+    next := first;
     repeat
+        node := nodes[next];
         case paths[currentPath] of
             'L':
-                element := node.left;
+                next := node.left;
             'R':
-                element := node.right;
+                next := node.right;
         end;
-        if (element <> last) then node := nodes[element];
         Inc(steps);
         Inc(currentPath);
         if currentPath > Length(paths) then currentPath := 1;
-    until ((element = last) or (steps >= maxSteps));
+    until ((next[3] = 'Z') or (steps >= maxSteps));
     Result := steps;
 end;
 
-function ProcessFile(FileName: String): Integer;
+function ProcessFile(FileName: String): Int64;
 var
     i: Integer;
-    total, steps: Integer;
-    slInput: TStringList;
+    steps: TInt64List;
+    lcm: Int64;
+    slInput, startNodes: TStringList;
     paths: String;
     line: String;
+    nodeName: String;
     node: TNode;
     nodes: TNodes;
 
 begin
     slInput := TStringList.Create;
+    startNodes := TStringList.Create;
     nodes := TNodes.Create;
-    total := 0;
-    steps := 0;
+    steps := TInt64List.Create;
+    lcm := 0;
     slInput.LoadFromFile(FileName);
     paths := slInput[0];
     for i := 2 to slInput.Count - 1 do
     begin
         node := ParseString(slInput[i]);
         nodes.Add(node.name, node);
+        if (node.name[3] = 'A') then
+            startNodes.Add(node.name);
         if ((node.name = node.left) or (node.name = node.right)) then
             WriteLn('Warning: Self reference in ', node.name);
     end;
-    steps := Navigate(nodes, paths, 'AAA', 'ZZZ', nodes.Count * nodes.Count);
+    WriteLn(startNodes.Count);
+    for nodeName in startNodes do
+    begin
+        steps.Add(Navigate(nodes, paths, nodeName, nodes.Count * nodes.Count));
+        WriteLn(nodeName, ' ', steps[steps.Count - 1]);
+    end;
+    if (steps.Count > 0) then
+    begin
+        lcm := steps[0];
+        for i := 1 to steps.Count - 1 do
+            lcm := leastCommonMultiple(lcm, steps[i]);
+        Result := lcm;
+    end
+    else
+        Result := 0;
+    FreeAndNil(steps);
     FreeAndNil(nodes);
+    FreeAndNil(startNodes);
     FreeAndNil(slInput);
-    Result := steps;
 end;
 
 begin
     ClrScr;
 
     // Test
-    total := ProcessFile('test-1.txt');
+    total := ProcessFile('test-2.txt');
     WriteLn('Test total: ', total);
-    Assert(total = 2);
+    Assert(total = 6);
 
     // Exercise
     total := ProcessFile('input-1.txt');
