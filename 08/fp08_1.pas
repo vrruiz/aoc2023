@@ -1,9 +1,9 @@
 {$mode ObjFPC}
-{$H}
+{$H+}
 program fp8_1;
 
 uses
-    Classes, Crt, Generics.Collections, Types, SysUtils, StrUtils;
+    Classes, Crt, Generics.Collections, Types;
 
 type
     TNode = class

@@ -3,7 +3,7 @@
 program fp8_2;
 
 uses
-    Classes, Crt, Generics.Collections, Types, SysUtils, StrUtils;
+    Classes, Crt, Generics.Collections, SysUtils;
 
 type
     TNode = class
